@@ -11,19 +11,36 @@ from sc2.units import Units
 #From project
 from game_player import GamePlayer
 from base_command import BaseCommand
+from army_command import ArmyCommand
 from early_game import EarlyGame
 from late_game import LateGame
+from enemy_player import Enemy
 
 
 
-class OopsBot(GamePlayer):
+class OopsBot(BotAI, GamePlayer):
+    def has_base(self):
+        if self.townhalls.amount > 0:
+            return True
+        else:
+            return False    
 
     async def on_start(self):
         await super().on_start()
+        #constructor here as it is instanced automatically
+        self.base_locations = []
         self.base_command = BaseCommand()
+        self.army_command = ArmyCommand()
         self.strategy = EarlyGame()
         self.plan = LateGame()
+        self.enemy = Enemy()
         await self.chat_send(f"strategy is ({self.strategy})")
+        townhalls = self.townhalls()
+        for t in townhalls:
+            self.base_locations.append(t.position)
+        #add locations to enemy
+        self.enemy.base_locations.append(self.enemy_start_locations[0])
+        self.enemy.base_locations.append(self.expansion_locations)
 
     async def on_step(self, iteration):
         #switch strategy
@@ -32,20 +49,16 @@ class OopsBot(GamePlayer):
             self.plan = ""
             await self.chat_send(f"strategy is ({self.strategy})")
 
-
-        # If we don't have a townhall anymore, send all units to attack
-        ccs: Units = self.townhalls
-        if not ccs:
-            target: Point2 = self.enemy_structures.random_or(self.enemy_start_locations[0]).position
-            for unit in self.workers | self.units(UnitTypeId.MARINE):
-                unit.attack(target)
-            return
-
+        ccs = self.townhalls()
         if iteration % 25 == 0:
             await self.distribute_workers()
-
+            #set has_base when no base left
+            if not ccs:
+                self.has_base = False
         
         await self.base_command.mule_down(self)
+
+        
         
         if not self.strategy.is_build_order_complete:
             #build order
@@ -57,50 +70,13 @@ class OopsBot(GamePlayer):
         #militarize
         await self.strategy.militarize(self)
 
+        #attack or defend
+        if self.strategy.army_command == "defensive":
+            await self.army_command.defend(self, self.enemy)
+        elif self.strategy.army_command == "offensive":
+            await self.army_command.attack(self, self.enemy)
+
         
-        marines: Units = self.units(UnitTypeId.MARINE).idle
-        marauders: Units = self.units(UnitTypeId.MARAUDER).idle
-        medivacs: Units = self.units(UnitTypeId.MEDIVAC).idle
-        enemy_location = self.enemy_start_locations[0]
-        if marines.amount > 1:
-            far_marine = marines.closest_to(enemy_location)
-            for medi in medivacs:
-                medi.move(far_marine)
-        far_building = self.structures.closest_to(enemy_location)
-        for marine in marines:
-            marine.move(far_building.position.towards(self.base_locations[-1], 10))
-            marine.stop
-        for marauder in marauders:
-            marauder.move(far_building.position.towards(self.base_locations[-1], 10))
-            marauder.stop
-        army = marines.amount + marauders.amount + (medivacs.amount * 0.5)
-        if self.supply_army > 60:
-            await self.chat_send(f"I'm attacking!'")
-            target: Point2 = self.enemy_structures.random_or(enemy_location).position
-            marines: Units = self.units(UnitTypeId.MARINE)
-            marauders: Units = self.units(UnitTypeId.MARAUDER)
-            for marine in marines:
-                marine.attack(target)
-            for marauder in marauders:
-                marauder.attack(target)
-        elif self.supply_used > 90:
-            if army > 40:
-                await self.chat_send(f"I'm attacking!'")
-                target: Point2 = self.enemy_structures.random_or(enemy_location).position
-                marines: Units = self.units(UnitTypeId.MARINE)
-                marauders: Units = self.units(UnitTypeId.MARAUDER)
-                for marine in marines:
-                    marine.attack(target)
-                for marauder in marauders:
-                    marauder.attack(target)
-        elif army > 20:
-            await self.chat_send(f"I'm attacking!'")
-            target: Point2 = self.enemy_structures.random_or(enemy_location).position
-            marines: Units = self.units(UnitTypeId.MARINE)
-            marauders: Units = self.units(UnitTypeId.MARAUDER)
-            for marine in marines:
-                marine.attack(target)
-            for marauder in marauders:
-                marauder.attack(target)
+        
 
         

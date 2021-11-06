@@ -23,7 +23,7 @@ class LateGame(Strategy):
             # Build workers
             for cc in ccs:
                 surplus_harvesters = cc.surplus_harvesters
-                if oops_bot.can_afford(UnitTypeId.SCV) and surplus_harvesters < 0 and cc.is_idle and oops_bot.units(UnitTypeId.SCV).idle.amount < 60:
+                if oops_bot.can_afford(UnitTypeId.SCV) and surplus_harvesters < 0 and cc.is_idle and oops_bot.units(UnitTypeId.SCV).idle.amount < 60 and (oops_bot.supply_used < 185 and oops_bot.supply_workers < 10):
                     await oops_bot.base_command.build_workers(cc)
             #build depots
             if (oops_bot.supply_left < 10):
@@ -34,7 +34,7 @@ class LateGame(Strategy):
                 await oops_bot.base_command.build_gas_refineries(ccs, oops_bot)
             
             #build expansion
-            if (oops_bot.minerals > 600 and oops_bot.townhalls.amount < 4 and not (oops_bot.already_pending(UnitTypeId.COMMANDCENTER)) or (oops_bot.minerals > 1200 and oops_bot.townhalls.amount <16):
+            if (oops_bot.minerals > 600 and oops_bot.townhalls.amount < 4 and oops_bot.already_pending(UnitTypeId.COMMANDCENTER) < 1) or (oops_bot.minerals > 1200 and oops_bot.townhalls.amount < 16):
                 await oops_bot.expand_now()
                 await oops_bot.chat_send(f"(building expansion)")
 
@@ -51,20 +51,18 @@ class LateGame(Strategy):
                     rax.build(UnitTypeId.BARRACKSREACTOR)
 
         async def militarize(self, oops_bot):
-            # Train marines and marauders
-            for rax in oops_bot.structures(UnitTypeId.BARRACKS).ready.idle:
-                if rax.has_techlab and oops_bot.can_afford(UnitTypeId.MARAUDER):
-                    rax.train(UnitTypeId.MARAUDER)
-                elif oops_bot.can_afford(UnitTypeId.MARINE):
-                    rax.train(UnitTypeId.MARINE)
-
-            #Train medivacs
-            for sp in oops_bot.structures(UnitTypeId.STARPORT).ready.idle:
-                if oops_bot.can_afford(UnitTypeId.MEDIVAC) and oops_bot.units(UnitTypeId.MEDIVAC).amount < 8:
-                    sp.train(UnitTypeId.MEDIVAC)
-
-            #if oops_bot.already_pending_upgrade(UpgradeId.COMBATSHIELD) == 0 and oops_bot.can_afford(UpgradeId.COMBATSHIELD):
-                #oops_bot.research(UpgradeId.COMBATSHIELD)
-
-            #if oops_bot.already_pending_upgrade(UpgradeId.JACKHAMMERCONCUSSIONGRENADES) == 0 and oops_bot.can_afford(UpgradeId.JACKHAMMERCONCUSSIONGRENADES):
-                #oops_bot.research(UpgradeId.JACKHAMMERCONCUSSIONGRENADES)
+            if oops_bot.supply_used < 185:
+                # Train marines and marauders
+                for rax in oops_bot.structures(UnitTypeId.BARRACKS).ready.idle:
+                    if rax.has_techlab and oops_bot.can_afford(UnitTypeId.MARAUDER):
+                        rax.train(UnitTypeId.MARAUDER)
+                    elif oops_bot.can_afford(UnitTypeId.MARINE):
+                        rax.train(UnitTypeId.MARINE)
+                #Train medivacs
+                for sp in oops_bot.structures(UnitTypeId.STARPORT).ready.idle:
+                    if oops_bot.can_afford(UnitTypeId.MEDIVAC) and oops_bot.units(UnitTypeId.MEDIVAC).amount < 8:
+                        sp.train(UnitTypeId.MEDIVAC)
+            elif oops_bot.supply_used > 185:
+                for sp in oops_bot.structures(UnitTypeId.STARPORT).ready.idle:
+                    if oops_bot.can_afford(UnitTypeId.VALKRYIE) and oops_bot.units(UnitTypeId.VALKRYIE).amount < 10:
+                        sp.train(UnitTypeId.VALKRYIE)
