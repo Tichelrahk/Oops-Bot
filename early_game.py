@@ -77,18 +77,6 @@ class EarlyGame(Strategy):
                 if oops_bot.can_afford(UnitTypeId.REFINERY) and (oops_bot.already_pending(UnitTypeId.REFINERY) + oops_bot.structures(UnitTypeId.REFINERY).ready.amount) < 4:
                     await oops_bot.base_command.build_gas_refineries(ccs, oops_bot)
 
-                if oops_bot.can_afford(UnitTypeId.BARRACKS) and (oops_bot.already_pending(UnitTypeId.BARRACKS) + oops_bot.structures(UnitTypeId.BARRACKS).ready.amount) < 4:
-                    p: Point2 = ccs[0].position.towards(oops_bot.enemy_start_locations[0], 14)
-                    await oops_bot.build(UnitTypeId.BARRACKS, near=p)
-
-                if oops_bot.can_afford(UnitTypeId.STARPORT) and (oops_bot.already_pending(UnitTypeId.STARPORT) + oops_bot.structures(UnitTypeId.STARPORT).ready.amount) < 2:
-                    p: Point2 = ccs[0].position.towards(oops_bot.enemy_start_locations[0], 8)
-                    await oops_bot.build(UnitTypeId.STARPORT, near=p)
-
-                for rax in oops_bot.structures(UnitTypeId.BARRACKS).ready.idle:
-                    if not rax.has_techlab and oops_bot.can_afford(UnitTypeId.BARRACKSREACTOR):
-                        rax.build(UnitTypeId.BARRACKSREACTOR)
-
 
 
 
@@ -99,8 +87,3 @@ class EarlyGame(Strategy):
                     rax.train(UnitTypeId.MARAUDER)
                 elif oops_bot.can_afford(UnitTypeId.MARINE):
                     rax.train(UnitTypeId.MARINE)
-
-            #Train medivacs
-            for sp in oops_bot.structures(UnitTypeId.STARPORT).ready.idle:
-                if oops_bot.can_afford(UnitTypeId.MEDIVAC) and oops_bot.units(UnitTypeId.MEDIVAC).idle.amount < 12:
-                    sp.train(UnitTypeId.MEDIVAC)
