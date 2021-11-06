@@ -1,5 +1,6 @@
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.unit import Unit
+from sc2.ids.ability_id import AbilityId
 
 from command import Command
 
@@ -9,6 +10,7 @@ class BaseCommand(Command):
     # Build refineries (on nearby vespene) when at least one barracks is in construction
         # Loop over all townhalls that are 100% complete
         for cc in ccs:
+            vgs = []
             if cc.is_ready:
             # Find all vespene geysers that are closer than range 10 to this townhall
                 vgs: Units = OopsBot.vespene_geyser.closer_than(10, cc)
@@ -27,4 +29,14 @@ class BaseCommand(Command):
         cc.train(UnitTypeId.SCV)
 
     async def redistribute_workers(self, OopsBot):
-        await OopsBot.distribute_workers(resource_ratio=2)
+        await OopsBot.distribute_workers(resource_ratio=1)
+
+
+    #call mule
+    async def mule_down(self, oops_bot):
+        for oc in oops_bot.townhalls(UnitTypeId.ORBITALCOMMAND).filter(lambda x: x.energy >= 50):
+            #minerals   
+            mfs: Units = oops_bot.mineral_field.closer_than(10, oc)
+            if mfs:
+                mf: Unit = max(mfs, key=lambda x: x.mineral_contents)
+                oc(AbilityId.CALLDOWNMULE_CALLDOWNMULE, mf)
