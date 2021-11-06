@@ -57,7 +57,7 @@ class OopsBot(GamePlayer):
         #militarize
         await self.strategy.militarize(self)
 
-        # Send marines in waves of 15, each time 15 are idle, send them to their death
+        
         marines: Units = self.units(UnitTypeId.MARINE).idle
         marauders: Units = self.units(UnitTypeId.MARAUDER).idle
         medivacs: Units = self.units(UnitTypeId.MEDIVAC).idle
@@ -66,14 +66,34 @@ class OopsBot(GamePlayer):
             far_marine = marines.closest_to(enemy_location)
             for medi in medivacs:
                 medi.move(far_marine)
-
+        far_building = self.structures.closest_to(enemy_location)
         for marine in marines:
-            marine.move(self.base_locations[-1].towards(enemy_location, 20))
+            marine.move(far_building.position.towards(self.base_locations[-1], 10))
+            marine.stop
         for marauder in marauders:
-            marauder.move(self.base_locations[-1].towards(enemy_location, 20))
-
-        army = marines.amount + marauders.amount + (medivacs.amount * 0.5)  
-        if army > 20:
+            marauder.move(far_building.position.towards(self.base_locations[-1], 10))
+            marauder.stop
+        army = marines.amount + marauders.amount + (medivacs.amount * 0.5)
+        if self.supply_army > 60:
+            await self.chat_send(f"I'm attacking!'")
+            target: Point2 = self.enemy_structures.random_or(enemy_location).position
+            marines: Units = self.units(UnitTypeId.MARINE)
+            marauders: Units = self.units(UnitTypeId.MARAUDER)
+            for marine in marines:
+                marine.attack(target)
+            for marauder in marauders:
+                marauder.attack(target)
+        elif self.supply_used > 90:
+            if army > 40:
+                await self.chat_send(f"I'm attacking!'")
+                target: Point2 = self.enemy_structures.random_or(enemy_location).position
+                marines: Units = self.units(UnitTypeId.MARINE)
+                marauders: Units = self.units(UnitTypeId.MARAUDER)
+                for marine in marines:
+                    marine.attack(target)
+                for marauder in marauders:
+                    marauder.attack(target)
+        elif army > 20:
             await self.chat_send(f"I'm attacking!'")
             target: Point2 = self.enemy_structures.random_or(enemy_location).position
             marines: Units = self.units(UnitTypeId.MARINE)

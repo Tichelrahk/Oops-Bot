@@ -14,12 +14,7 @@ class EarlyGame(Strategy):
 
         async def build_order(self, ccs, oops_bot):
             
-            #prioritize orbitals
-            orbital_tech_requirement: float = oops_bot.tech_requirement_progress(UnitTypeId.ORBITALCOMMAND)
-            if orbital_tech_requirement == 1:
-                for cc in oops_bot.townhalls(UnitTypeId.COMMANDCENTER).idle:
-                    if oops_bot.can_afford(UnitTypeId.ORBITALCOMMAND):
-                        cc(AbilityId.UPGRADETOORBITAL_ORBITALCOMMAND)
+            
 
             if not self.is_build_order_complete and (oops_bot.already_pending(UnitTypeId.FACTORY) + oops_bot.structures(UnitTypeId.FACTORY).ready.amount) > 0:
                     self.is_build_order_complete = True
@@ -61,6 +56,12 @@ class EarlyGame(Strategy):
                 
 
         async def industrialize(self, ccs, oops_bot):
+            #prioritize orbitals
+            orbital_tech_requirement: float = oops_bot.tech_requirement_progress(UnitTypeId.ORBITALCOMMAND)
+            if orbital_tech_requirement == 1:
+                for cc in oops_bot.townhalls(UnitTypeId.COMMANDCENTER).idle:
+                    if oops_bot.can_afford(UnitTypeId.ORBITALCOMMAND):
+                        cc(AbilityId.UPGRADETOORBITAL_ORBITALCOMMAND)
             # Build workers
             for cc in ccs:
                 surplus_harvesters = cc.surplus_harvesters

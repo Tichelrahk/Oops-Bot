@@ -13,6 +13,13 @@ class LateGame(Strategy):
             self.is_build_order_complete = True
 
         async def industrialize(self, ccs, oops_bot):
+            #prioritize orbitals
+            orbital_tech_requirement: float = oops_bot.tech_requirement_progress(UnitTypeId.ORBITALCOMMAND)
+            if orbital_tech_requirement == 1:
+                for cc in oops_bot.townhalls(UnitTypeId.COMMANDCENTER).idle:
+                    if oops_bot.can_afford(UnitTypeId.ORBITALCOMMAND):
+                        cc(AbilityId.UPGRADETOORBITAL_ORBITALCOMMAND)
+
             # Build workers
             for cc in ccs:
                 surplus_harvesters = cc.surplus_harvesters
@@ -27,7 +34,7 @@ class LateGame(Strategy):
                 await oops_bot.base_command.build_gas_refineries(ccs, oops_bot)
             
             #build expansion
-            if (oops_bot.minerals > 600 and oops_bot.townhalls.amount < 4) or (oops_bot.minerals > 1200 and oops_bot.townhalls.amount <16):
+            if (oops_bot.minerals > 600 and oops_bot.townhalls.amount < 4 and not (oops_bot.already_pending(UnitTypeId.COMMANDCENTER)) or (oops_bot.minerals > 1200 and oops_bot.townhalls.amount <16):
                 await oops_bot.expand_now()
                 await oops_bot.chat_send(f"(building expansion)")
 
@@ -53,7 +60,7 @@ class LateGame(Strategy):
 
             #Train medivacs
             for sp in oops_bot.structures(UnitTypeId.STARPORT).ready.idle:
-                if oops_bot.can_afford(UnitTypeId.MEDIVAC) and oops_bot.units(UnitTypeId.MEDIVAC).idle.amount < 8:
+                if oops_bot.can_afford(UnitTypeId.MEDIVAC) and oops_bot.units(UnitTypeId.MEDIVAC).amount < 8:
                     sp.train(UnitTypeId.MEDIVAC)
 
             #if oops_bot.already_pending_upgrade(UpgradeId.COMBATSHIELD) == 0 and oops_bot.can_afford(UpgradeId.COMBATSHIELD):
