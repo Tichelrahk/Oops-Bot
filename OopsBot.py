@@ -8,11 +8,19 @@ from sc2.position import Point2
 from sc2.unit import Unit
 from sc2.units import Units
 
+#From project
+from GamePlayer import GamePlayer
 
 
 
-class OopsBot(BotAI):
+class OopsBot(GamePlayer):
+
     async def on_step(self, iteration):
+
+        if iteration == 4:
+            if self.has_base():
+                await self.chat_send(f"I have a base")
+
         # If we don't have a townhall anymore, send all units to attack
         ccs: Units = self.townhalls(UnitTypeId.COMMANDCENTER)
         if not ccs:
