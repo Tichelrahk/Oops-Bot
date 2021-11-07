@@ -13,7 +13,7 @@ from game_player import GamePlayer
 class Enemy(GamePlayer):
     def __init__(self):
         super().__init__()
-        self.has_homebase_base = True
+        self._has_homebase_base = True
 
     def has_base(self):
-        return self.has_homebase_base
+        return self._has_homebase_base

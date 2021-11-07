@@ -35,7 +35,7 @@ class BaseCommand(Command):
         await oops_bot.build(UnitTypeId.SUPPLYDEPOT, near=ccs[0].position.towards(oops_bot.game_info.map_center, 4))
 
     async def builder(self, oops_bot, unit_id, distance):
-        cc = oops_bot.base_locations[0]
+        cc = oops_bot._base_locations[0]
         await oops_bot.build(unit_id, near=cc.position.towards(oops_bot.game_info.map_center, distance))
 
 
