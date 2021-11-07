@@ -1,14 +1,14 @@
 import sys
-
+from abc import ABC, abstractmethod
 
 #From framework
 from sc2.position import Point2
 from sc2.bot_ai import BotAI
 
 
-class GamePlayer():
+class GamePlayer(ABC):
     def __init__(self):
         self.base_locations = []
-
+    @abstractmethod
     def has_base(self):
         pass

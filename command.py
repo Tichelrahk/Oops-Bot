@@ -2,8 +2,8 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.unit import Unit
 
 class Command():
-	def immediate(command, *args):
-		command(queue=False, *args)
+	async def immediate(self, command, **kwargs):
+		await command(kwargs, queue=True)
 
-	def queue(command, *args):
-		command(queue=True, *args)
+	async def queue(self, command, **kwargs):
+		await command(kwargs, queue=True)

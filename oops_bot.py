@@ -51,7 +51,7 @@ class OopsBot(BotAI, GamePlayer):
 
         ccs = self.townhalls()
         if iteration % 25 == 0:
-            await self.distribute_workers()
+            await self.base_command.redistribute_workers(self)
             #set has_base when no base left
             if not ccs:
                 self.has_base = False

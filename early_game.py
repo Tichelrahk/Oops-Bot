@@ -23,12 +23,13 @@ class EarlyGame(Strategy):
             if not self.is_build_order_complete:
                 #standard build order
                 if self.build_order_check == 0 and oops_bot.supply_workers >= 13 and oops_bot.can_afford(UnitTypeId.SUPPLYDEPOT) and oops_bot.already_pending(UnitTypeId.SUPPLYDEPOT) < 1:
-                    await oops_bot.build(UnitTypeId.SUPPLYDEPOT, near=ccs[0].position.towards(oops_bot.game_info.map_center, 5))
+                    await oops_bot.base_command.build_supply(oops_bot)
+
                     self.build_order_check = 1
                     await oops_bot.chat_send(f"(building supply depot)")
 
                 if self.build_order_check == 1 and oops_bot.structures(UnitTypeId.SUPPLYDEPOT).ready and oops_bot.can_afford(UnitTypeId.BARRACKS):
-                    await oops_bot.build(UnitTypeId.BARRACKS, near=ccs[0].position.towards(oops_bot.game_info.map_center, 12))
+                    await oops_bot.base_command.builder(oops_bot, UnitTypeId.BARRACKS, 12)
                     self.build_order_check = 2
                     await oops_bot.chat_send(f"(building rax)")
 
@@ -50,7 +51,7 @@ class EarlyGame(Strategy):
                     await oops_bot.base_command.build_gas_refineries(ccs, oops_bot)
 
                 if self.build_order_check >= 3 and oops_bot.can_afford(UnitTypeId.FACTORY) and  (oops_bot.already_pending(UnitTypeId.FACTORY) + oops_bot.structures(UnitTypeId.FACTORY).ready.amount) < 2:
-                    await oops_bot.build(UnitTypeId.FACTORY, near=ccs[0].position.towards(oops_bot.game_info.map_center, 10))
+                    await oops_bot.base_command.builder(oops_bot, UnitTypeId.FACTORY, 10)
                     await oops_bot.chat_send(f"(building factory)")
 
                 
@@ -66,13 +67,13 @@ class EarlyGame(Strategy):
             for cc in ccs:
                 surplus_harvesters = cc.surplus_harvesters
                 if oops_bot.can_afford(UnitTypeId.SCV) and surplus_harvesters < 0 and cc.is_idle:
-                    await oops_bot.base_command.build_workers(cc)
+                    await oops_bot.base_command.immediate(oops_bot.base_command.build_workers, cc=cc)
             #build depots
             if (
                 oops_bot.supply_left < (3 if oops_bot.structures(UnitTypeId.BARRACKS).amount < 3 else 5) and oops_bot.supply_used >= 14
             ):
                 if oops_bot.can_afford(UnitTypeId.SUPPLYDEPOT) and oops_bot.already_pending(UnitTypeId.SUPPLYDEPOT) < 1:
-                    await oops_bot.build(UnitTypeId.SUPPLYDEPOT, near=ccs[0].position.towards(oops_bot.game_info.map_center, 4))
+                    await oops_bot.base_command.build_supply(oops_bot)
 
             if self.is_build_order_complete:
                 if oops_bot.can_afford(UnitTypeId.REFINERY) and (oops_bot.already_pending(UnitTypeId.REFINERY) + oops_bot.structures(UnitTypeId.REFINERY).ready.amount) < 4:
