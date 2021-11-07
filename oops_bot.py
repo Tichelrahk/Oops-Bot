@@ -11,59 +11,79 @@ from sc2.units import Units
 #From project
 from game_player import GamePlayer
 from base_command import BaseCommand
+from army_command import ArmyCommand
 from early_game import EarlyGame
+from late_game import LateGame
+from enemy_player import Enemy
 
 
 
-class OopsBot(GamePlayer):
+class OopsBot(BotAI, GamePlayer):
+    def has_base(self):
+        if self.townhalls.amount > 0:
+            return True
+        else:
+            return False
+
+    def strategy(self):
+        return self._strategy
+
+    def enemy(self):
+        return self._enemy
+
+    def base_command(self):
+        return self._base_command
+
+    def army_command(self):
+        return self._army_command
 
     async def on_start(self):
         await super().on_start()
-        self.base_command = BaseCommand()
-        await self.chat_send(f"(GLHF)")
-        self.strategy = EarlyGame()
+        #constructor here as it is instanced automatically
+        self._base_locations = []
+        self._base_command = BaseCommand()
+        self._army_command = ArmyCommand()
+        self._strategy = EarlyGame()
+        self._plan = LateGame()
+        self._enemy = Enemy()
+        await self.chat_send(f"strategy is ({self.strategy})")
+        townhalls = self.townhalls()
+        for t in townhalls:
+            self._base_locations.append(t.position)
+        #add locations to enemy
+        self._enemy._base_locations.append(self.enemy_start_locations[0])
+        self._enemy._base_locations.append(self.expansion_locations)
 
     async def on_step(self, iteration):
-        #if iteration == 4:
-            #if self.has_base():
-                #await self.chat_send(f"I have a base")
+        #switch strategy
+        if self._strategy._is_build_order_complete and not self._plan == "":
+            self._strategy = self._plan
+            self._plan = ""
+            await self.chat_send(f"strategy is ({self.strategy})")
 
-        # If we don't have a townhall anymore, send all units to attack
-        ccs: Units = self.townhalls(UnitTypeId.COMMANDCENTER)
-        if not ccs:
-            target: Point2 = self.enemy_structures.random_or(self.enemy_start_locations[0]).position
-            for unit in self.workers | self.units(UnitTypeId.MARINE):
-                unit.attack(target)
-            return
+        ccs = self.townhalls()
+        if iteration % 25 == 0:
+            await self._base_command.redistribute_workers(self)
+            #set has_base when no base left
+            if not ccs:
+                self.has_base = False
+        
+        await self._base_command.mule_down(self)
 
+        
+        
+        if not self._strategy._is_build_order_complete:
+            #build order
+            await self._strategy.build_order(ccs, self)
 
-        #build order
-        await self.strategy.build_order(ccs, self)
+        #industrialize
+        await self._strategy.industrialize(ccs, self)
 
-        # Send marines in waves of 15, each time 15 are idle, send them to their death
-        marines: Units = self.units(UnitTypeId.MARINE).idle
-        if marines.amount > 15:
-            target: Point2 = self.enemy_structures.random_or(self.enemy_start_locations[0]).position
-            for marine in marines:
-                marine.attack(target)
+        #militarize
+        await self._strategy.militarize(self)
 
-        # Train more SCVs
-        #build workers based on gathering workers near command center
-        for cc in ccs:
-            surplus_harvesters = cc.surplus_harvesters
-            if self.can_afford(UnitTypeId.SCV) and surplus_harvesters < 0 and cc.is_idle:
-                await self.base_command.build_workers(cc)
-
-        # Train marines
-        for rax in self.structures(UnitTypeId.BARRACKS).ready.idle:
-            if self.can_afford(UnitTypeId.MARINE):
-                rax.train(UnitTypeId.MARINE)
-
-        # Send idle workers to gather minerals near command center
-        for scv in self.workers.idle:
-            scv.gather(self.mineral_field.closest_to(cc))
-
-        if (
-            self.structures(UnitTypeId.REFINERY).ready.amount >= 1
-        ):
-            await self.base_command.redistribute_workers(self)
+        #attack or defend
+        if self._strategy._army_command == "defensive":
+            await self._army_command.defend(self, self._enemy)
+        elif self._strategy._army_command == "offensive":
+            await self._army_command.attack(self, self._enemy)

@@ -14,7 +14,7 @@ from oops_bot import OopsBot
 def main():
     run_game(
         maps.get("AcropolisLE"),
-        [Bot(Race.Terran, OopsBot()), Computer(Race.Zerg, Difficulty.Hard)],
+        [Bot(Race.Terran, OopsBot()), Computer(Race.Zerg, Difficulty.VeryHard)],
         realtime=False,
     )
 
